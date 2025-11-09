@@ -1,5 +1,40 @@
-bin/
-obj/
-publish/
+# 编译输出
+[Bb]in/
+[Oo]bj/
+*.exe
+*.dll
+*.pdb
+*.xml
+
+# Visual Studio
+.vs/
+*.suo
 *.user
-.vs
+*.userosscache
+*.sln.docstates
+
+# NuGet
+.nuget/
+packages/
+*.nupkg
+ProjectFabrication/
+
+# 发布输出
+publish/
+Release/
+Debug/
+
+# 日志文件
+*.log
+*.etl
+*.bak
+*.tmp
+
+# 操作系统文件
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# 项目特定文件（根据实际情况调整）
+/appsettings.Development.json
+/connectionstrings.local.json

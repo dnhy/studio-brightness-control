@@ -1,29 +1,32 @@
-name: Build and Release
+name: Build .NET Framework 4.8 App
 
 on:
   push:
-    tags: ['v*']
+    branches: [ main, master ] # 在推送到主分支时触发
+  pull_request:
+    branches: [ main, master ] # 在向主分支提PR时触发
 
 jobs:
   build:
-    runs-on: windows-latest
-    
+    runs-on: windows-latest # 使用 Windows 构建环境
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v1.1 # 配置 MSBuild 环境
 
-    - name: Restore NuGet packages
-      run: nuget restore
+    - name: Build Release Version
+      run: msbuild YourSolution.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
+      # 请将 "YourSolution.sln" 替换为你实际解决方案文件的名称
 
-    - name: Build Release version
-      run: msbuild /p:Configuration=Release /p:Platform="Any CPU"
-
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v4
       with:
-        tag_name: ${{ github.ref_name }}
-        name: Release ${{ github.ref_name }}
-        files: bin/Release/StudioBrightnessControl.exe
+        name: MyApp-Release
+        path: |
+          **\bin\Release\*.exe
+          **\bin\Release\*.dll
+          **\bin\Release\*.config
+        # 路径需根据你项目的实际输出结构调整。这里匹配所有项目Release目录下的exe等文件。
