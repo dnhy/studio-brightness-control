@@ -76,7 +76,8 @@ namespace StudioBrightnessControl
             try
             {
                 // 方法1: 直接从文件路径加载
-                notifyIcon.Icon = new Icon("Resources/brightness.ico");
+                string iconPath = Path.Combine(Application.StartupPath, "Resources", "brightness.ico");
+                notifyIcon.Icon = new Icon(iconPath);
             }
             catch (Exception ex)
             {
