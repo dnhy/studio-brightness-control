@@ -5,8 +5,6 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  release:
-    types: [published]
 
 jobs:
   build:
@@ -22,74 +20,22 @@ jobs:
     - name: Build Release Version
       run: msbuild BrightnessApp.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
 
-    - name: Download and Install Inno Setup
+    - name: Download Inno Setup
       run: |
-        # 下载 Inno Setup
         $innosetupUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
         $installerPath = "innosetup.exe"
         Invoke-WebRequest -Uri $innosetupUrl -OutFile $installerPath
         
-        # 静默安装
-        Start-Process -FilePath $installerPath -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-" -Wait
-
-    - name: Create Inno Setup Script
+    - name: Install Inno Setup
       run: |
-        # 创建 Inno Setup 脚本文件
-        $issContent = @"
-#define MyAppName "Brightness App"
-#define MyAppVersion "1.0.0"
-#define MyAppPublisher "Your Company"
-#define MyAppExeName "BrightnessApp.exe"
+        .\innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
 
-[Setup]
-AppId={{{{{{{-A1B2-C3D4-E5F6-G7H8I9J0K1L2}
-AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-AppPublisher={#MyAppPublisher}
-DefaultDirName={autopf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
-OutputDir=Output
-OutputBaseFilename=BrightnessApp-Setup
-Compression=lzma
-SolidCompression=yes
-WizardStyle=modern
-
-[Languages]
-Name: "english"; MessagesFile: "compiler:Default.isl"
-
-[Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
-
-[Files]
-Source: "BrightnessApp\bin\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
-
-[Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-
-[Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
-"@
-        Set-Content -Path "setup.iss" -Value $issContent
-
-    - name: Compile Installer
+    - name: Create Installer
       run: |
-        # 编译安装程序
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
 
-    - name: Upload Build Artifacts
+    - name: Upload Installer Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: Release-Artifacts
-        path: |
-          **\bin\Release\*.exe
-          **\bin\Release\*.dll
-          **\bin\Release\*.config
-          Output/*.exe
-        retention-days: 30
-
-    - name: Upload to GitHub Release
-      if: github.event_name == 'release'
-      uses: softprops/action-gh-release@v1
-      with:
-        files: Output/*.exe
+        name: BrightnessApp-Installer
+        path: Output\BrightnessApp_Setup.exe
