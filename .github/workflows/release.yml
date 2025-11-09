@@ -22,19 +22,12 @@ jobs:
       run: |
         msbuild /p:Configuration=Release /p:Platform="Any CPU"
 
-    - name: Download ILRepack
+    - name: List output files
       run: |
-        curl -L -o ILRepack.zip https://github.com/gluck/il-repack/releases/download/2.1.0-beta1/ILRepack.2.1.0-beta1.zip
-        7z x ILRepack.zip -oILRepack
-
-    - name: Create single executable
-      run: |
-        .\ILRepack\ILRepack.exe /out:StudioBrightnessControl.exe /wildcards bin\Release\StudioBrightnessControl.exe bin\Release\*.dll
-
-    - name: Verify output
-      run: |
-        echo "=== Final executable ==="
-        dir StudioBrightnessControl.exe
+        echo "=== Build output ==="
+        dir bin\Release /s
+        echo "=== File sizes ==="
+        dir bin\Release\*.exe
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -44,5 +37,12 @@ jobs:
         body: |
           # Studio Brightness Control ${{ github.ref_name }}
           
-          单文件版本，包含所有依赖。
-        files: StudioBrightnessControl.exe
+          ## 系统要求
+          - Windows 10/11
+          - .NET Framework 4.8
+          
+          ## 使用说明
+          1. 下载 `StudioBrightnessControl.exe`
+          2. 直接运行，程序会在系统托盘中运行
+          3. 使用热键 `LShift + LWin + 左/右方向键` 调节亮度
+        files: bin/Release/StudioBrightnessControl.exe
