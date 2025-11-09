@@ -1,31 +1,95 @@
-name: Build .NET Framework 4.8 App
+name: Build and Create Installer
 
 on:
   push:
-    branches: [ main, master ] # 在推送到主分支时触发
+    branches: [ main, master ]
   pull_request:
-    branches: [ main, master ] # 在向主分支提PR时触发
+    branches: [ main, master ]
+  release:
+    types: [published]
 
 jobs:
   build:
-    runs-on: windows-latest # 使用 Windows 构建环境
+    runs-on: windows-latest
 
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
     - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v1.1 # 配置 MSBuild 环境
+      uses: microsoft/setup-msbuild@v1.1
 
     - name: Build Release Version
       run: msbuild BrightnessApp.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
 
+    - name: Download and Install Inno Setup
+      run: |
+        # 下载 Inno Setup
+        $innosetupUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+        $installerPath = "innosetup.exe"
+        Invoke-WebRequest -Uri $innosetupUrl -OutFile $installerPath
+        
+        # 静默安装
+        Start-Process -FilePath $installerPath -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/SP-" -Wait
+
+    - name: Create Inno Setup Script
+      run: |
+        # 创建 Inno Setup 脚本文件
+        $issContent = @"
+#define MyAppName "Brightness App"
+#define MyAppVersion "1.0.0"
+#define MyAppPublisher "Your Company"
+#define MyAppExeName "BrightnessApp.exe"
+
+[Setup]
+AppId={{{{{{{-A1B2-C3D4-E5F6-G7H8I9J0K1L2}
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+AppPublisher={#MyAppPublisher}
+DefaultDirName={autopf}\{#MyAppName}
+DefaultGroupName={#MyAppName}
+OutputDir=Output
+OutputBaseFilename=BrightnessApp-Setup
+Compression=lzma
+SolidCompression=yes
+WizardStyle=modern
+
+[Languages]
+Name: "english"; MessagesFile: "compiler:Default.isl"
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
+
+[Files]
+Source: "BrightnessApp\bin\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
+
+[Icons]
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+
+[Run]
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+"@
+        Set-Content -Path "setup.iss" -Value $issContent
+
+    - name: Compile Installer
+      run: |
+        # 编译安装程序
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: MyApp-Release
+        name: Release-Artifacts
         path: |
           **\bin\Release\*.exe
           **\bin\Release\*.dll
           **\bin\Release\*.config
-        # 路径需根据你项目的实际输出结构调整。这里匹配所有项目Release目录下的exe等文件。
+          Output/*.exe
+        retention-days: 30
+
+    - name: Upload to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: Output/*.exe
