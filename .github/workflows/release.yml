@@ -6,21 +6,18 @@ on:
   pull_request:
     branches: [ main, master ]
   release:
-    types: [published]
+    types: [published]  # 新增：在发布版本时触发
 
 permissions:
-  contents: write  # 允许创建和上传 release 资源
-  actions: read    # 允许读取 actions
-  checks: read     # 允许读取 checks
+  contents: write  # 关键：允许上传 release 附件
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # 获取所有历史记录和标签
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v1.1
@@ -48,7 +45,5 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: Output/BrightnessAppInstaller.exe
-        tag_name: ${{ github.ref_name }}  # 明确指定标签名
-        body: "Automated build of BrightnessApp"
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
