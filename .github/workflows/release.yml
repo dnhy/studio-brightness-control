@@ -8,6 +8,9 @@ on:
   release:
     types: [published]  # 新增：在发布版本时触发
 
+permissions:
+  contents: write  # 关键：允许上传 release 附件
+
 jobs:
   build:
     runs-on: windows-latest
