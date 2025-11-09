@@ -1,4 +1,4 @@
-name: Build and Create Installer
+name: Build .NET Framework 4.8 App
 
 on:
   push:
@@ -20,22 +20,14 @@ jobs:
     - name: Build Release Version
       run: msbuild BrightnessApp.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
 
-    - name: Download Inno Setup
-      run: |
-        $innosetupUrl = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
-        $installerPath = "innosetup.exe"
-        Invoke-WebRequest -Uri $innosetupUrl -OutFile $installerPath
-        
     - name: Install Inno Setup
-      run: |
-        .\innosetup.exe /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-
+      run: choco install innosetup -y
 
-    - name: Create Installer
-      run: |
-        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" setup.iss
+    - name: Build Installer with Inno Setup
+      run: iscc Installer.iss
 
-    - name: Upload Installer Artifact
+    - name: Upload Installer
       uses: actions/upload-artifact@v4
       with:
-        name: BrightnessApp-Installer
-        path: Output\BrightnessApp_Setup.exe
+        name: Installer
+        path: Output\BrightnessAppInstaller.exe
