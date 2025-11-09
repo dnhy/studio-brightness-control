@@ -10,7 +10,7 @@ SolidCompression=yes
 
 [Files]
 Source: "bin\Release\BrightnessApp.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "bin\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "bin\Release\*.dll"; DestDir: "{app}"; Flags: ignoreversion external
 Source: "bin\Release\*.config"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
