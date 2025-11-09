@@ -3,63 +3,38 @@ name: Build and Release
 on:
   push:
     tags: ['v*']
-  workflow_dispatch:
-
-permissions:
-  contents: write
 
 jobs:
   build:
     runs-on: windows-latest
     
-    strategy:
-      matrix:
-        runtime: [win-x64, win-x86]
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '6.0.x'
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v1
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Restore NuGet packages
+      run: nuget restore
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Publish
+    - name: Build Release version
       run: |
-        dotnet publish -c Release -r ${{ matrix.runtime }} -p:PublishSingleFile=true --self-contained true -o "publish/${{ matrix.runtime }}" --no-build
+        msbuild /p:Configuration=Release /p:Platform="Any CPU"
 
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: StudioBrightnessControl-${{ matrix.runtime }}
-        path: publish/${{ matrix.runtime }}/
-        retention-days: 1
-
-  create-release:
-    needs: build
-    runs-on: windows-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    
-    permissions:
-      contents: write
-    
-    steps:
-    - name: Download all artifacts
-      uses: actions/download-artifact@v4
-      with:
-        path: artifacts
-
-    - name: Display artifact structure
+    - name: Download ILRepack
       run: |
-        echo "Artifact structure:"
-        dir artifacts /s
+        curl -L -o ILRepack.zip https://github.com/gluck/il-repack/releases/download/2.1.0-beta1/ILRepack.2.1.0-beta1.zip
+        7z x ILRepack.zip -oILRepack
+
+    - name: Create single executable
+      run: |
+        .\ILRepack\ILRepack.exe /out:StudioBrightnessControl.exe /wildcards bin\Release\StudioBrightnessControl.exe bin\Release\*.dll
+
+    - name: Verify output
+      run: |
+        echo "=== Final executable ==="
+        dir StudioBrightnessControl.exe
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -69,14 +44,5 @@ jobs:
         body: |
           # Studio Brightness Control ${{ github.ref_name }}
           
-          ## 下载说明
-          - **StudioBrightnessControl-win-x64.exe**: 64位 Windows 系统
-          - **StudioBrightnessControl-win-x86.exe**: 32位 Windows 系统
-          
-          ## 使用说明
-          1. 下载对应版本的可执行文件
-          2. 直接运行，程序会在系统托盘中运行
-          3. 使用热键 `LShift + LWin + 左/右方向键` 调节亮度
-        files: |
-          artifacts/StudioBrightnessControl-win-x64/StudioBrightnessControl.exe
-          artifacts/StudioBrightnessControl-win-x86/StudioBrightnessControl.exe
+          单文件版本，包含所有依赖。
+        files: StudioBrightnessControl.exe
