@@ -18,8 +18,7 @@ jobs:
       uses: microsoft/setup-msbuild@v1.1 # 配置 MSBuild 环境
 
     - name: Build Release Version
-      run: msbuild YourSolution.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
-      # 请将 "YourSolution.sln" 替换为你实际解决方案文件的名称
+      run: msbuild BrightnessApp.sln /p:Configuration=Release /p:Platform="Any CPU" /p:TargetFrameworkVersion=v4.8
 
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
