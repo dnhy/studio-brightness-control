@@ -1,10 +1,12 @@
-name: Build .NET Framework 4.8 App
+name: Build and Release BrightnessApp
 
 on:
   push:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
+  release:
+    types: [published]  # 新增：在发布版本时触发
 
 jobs:
   build:
@@ -26,8 +28,19 @@ jobs:
     - name: Build Installer with Inno Setup
       run: iscc Installer.iss
 
-    - name: Upload Installer
+    # 上传构建产物到 artifact（仅 push 和 PR 时）
+    - name: Upload Installer Artifact
+      if: github.event_name != 'release'
       uses: actions/upload-artifact@v4
       with:
         name: Installer
         path: Output\BrightnessAppInstaller.exe
+
+    # 上传安装包到 GitHub Release（仅 release 时）
+    - name: Upload Installer to GitHub Release
+      if: github.event_name == 'release'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: Output/BrightnessAppInstaller.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
