@@ -19,30 +19,11 @@ jobs:
       run: nuget restore
 
     - name: Build Release version
-      run: |
-        msbuild /p:Configuration=Release /p:Platform="Any CPU"
-
-    - name: List output files
-      run: |
-        echo "=== Build output ==="
-        dir bin\Release /s
-        echo "=== File sizes ==="
-        dir bin\Release\*.exe
+      run: msbuild /p:Configuration=Release /p:Platform="Any CPU"
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}
-        body: |
-          # Studio Brightness Control ${{ github.ref_name }}
-          
-          ## 系统要求
-          - Windows 10/11
-          - .NET Framework 4.8
-          
-          ## 使用说明
-          1. 下载 `StudioBrightnessControl.exe`
-          2. 直接运行，程序会在系统托盘中运行
-          3. 使用热键 `LShift + LWin + 左/右方向键` 调节亮度
         files: bin/Release/StudioBrightnessControl.exe
